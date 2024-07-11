@@ -2,16 +2,24 @@
 
 ### Aegis : A minimalist, schema-based, generic type guard tool with vanilla types
 
-# Why Aegis:
+<br>
+
+# ✨ Why Aegis:
 - Light: 1 file, few lines of code
 - Vanilla-like: Lets you use vanilla types
 - Easy debug: Explanation on why the value is not parsable
+- Easy schema syntax: only use few simple transposition rules
 
-# Get Started
-## Intall it :
+<br><br>
+
+
+# 📥 Intall it :
 - copy/paste `./Aegis.ts` in yout project
+- import it with `import {Aegis} from 'path/to/Aegis'`
 
-## Quick example:
+<br>
+
+# ⚡ Quick example:
 ```ts
 // Define a type as usual
 type Human = {
@@ -25,10 +33,10 @@ const Human_ = {
 }
 
 // Create a reusable Aegis guard for your type
-const A_human = Aegis<Human>(Human_);
+const Ahuman = Aegis<Human>(Human_);
 
 const john = { /* some values */ }
-if (A_human.is(my_variable)) {
+if (Ahuman.is(my_variable)) {
     // my_variable is of type Human
     // and has been guarded with 'my_variable is Human' so the compiler knows it
 }
@@ -36,7 +44,7 @@ if (A_human.is(my_variable)) {
 <br><br>
 
 
-# Debug Infos
+# 💬 Debug Infos
 ## Example of Aegis Message:
 ```json
 {
@@ -49,66 +57,77 @@ if (A_human.is(my_variable)) {
 ```
 will give the error:
 ```
-Failed at attribute 'hobbies'
-└ Failed at array element of index '2'
-  └ Failed at attribute 'name'
-    └ is of type 'number' instead of 'string'
+Failed to typeGard value to 'Human' type
+└ Failed at attribute 'hobbies'
+└ Failed at 'hobbies[2]'
+└ Failed at attribute 'name'
+└ 'name' is of type 'number' instead of 'string'
 ```
-## Get Message Using Store
+## Get Message Using AegisReason
 ```ts
-const A_human = Aegis<Human>(Human_);
-const alien = { /* some wrong values */ };
+const AHuman = Aegis<Human>(Human_);
+const alien = { /* wrong values */ };
 
-const store = Aegis.newStore(); // store.info empty
+const reason = AHuman.newReason(); // reason.info = ""
+// also staticly : const reason = Aegis.newReason()
 
-if (A_human.is(alien, store)) { ... }
+if (AHuman.is(alien, reason)) { ... }
 else {
-    console.log(store.info); // store.info = "Failed at attribute ..."
+    console.log(reason.info); // reason.info = "Failed at attribute ..."
 }
 ```
 > TypeScript type guard functions must only return a boolean, so we can't just pass information through the return of the `.is()` method. Instead, we store information in an object.
 
 <br><br>
 
-# Reusable (Stock)
+# ♻️ Reusable
 ```ts
-// Stock Aegis instances and reuse them
-const AegisStock = {
-    human: new Aegis<Human>(Human_),
-    cat: new Aegis<Cat>(Cat_)
-}
+// type.ts
+export type Human = {...}
+const Human_ = {...}
+export const AHuman = Aegis<Human>(Human_);
 
-if (AegisStock.human.is(john)) {
-    // john is of type Human
-}
+// script.ts
+import {type Human, AHuman}
+AHuman.is(...)
 ```
 <br><br>
 
-# Type -> Schema Syntax
+# 💱 Type <─> Schema Syntax
 ### Primitive
 ```ts
+// any
+type  T  = { var: any   }
+const T_ = { var: 'any' }
 // string
-type  T  = { var: string }
+type  T  = { var: string   }
 const T_ = { var: 'string' }
 // number
-type  T  = { var: number }
+type  T  = { var: number   }
 const T_ = { var: 'number' }
 // boolean
-type  T  = { var: boolean }
+type  T  = { var: boolean   }
 const T_ = { var: 'boolean' }
 // undefined
-type  T  = { var: undefined }
+type  T  = { var: undefined   }
 const T_ = { var: 'undefined' }
+...
 ```
+
+<br>
+
 ### Optional
 ```ts
 // optional: use _ in place of ?
-type  T  = { var?: string }
+type  T  = { var?: string   }
 const T_ = { var_: 'string' }
 ```
 > Aegis is strict, meaning that it allows only one type at a time, but makes an exception for `undefined` to allow optional variables. If a variable is set as 'optional', its absence is accepted.
 
+<br>
+
 ### Type in Type
+Could use other custom `Aegis schematized` types
 ```ts
 // A first type/schema
 type  T  = { ... }
@@ -118,6 +137,20 @@ const T_ = { ... }
 type  U  = { var: T }
 const U_ = { var: T_ }
 ```
+Could use other `UNschematized` types
+```ts
+// A first type/schema
+type  T  = {
+	hash : Hash //type from lib or other
+}
+const T_ = {
+	hash : 'Hash' // Will be treated as 'any'
+}
+```
+>Will be treated as 'any', so it will never trigger an error, but it's easier and clearer to keep the real type name rather than using 'any'.
+
+<br>
+
 ### Array
 > Aegis is strict, meaning all array elements must be of the same type.
 ```ts
@@ -133,3 +166,26 @@ const T_ = { var: [U_] }
 type  T  = { var: U[][] }
 const T_ = { var: [[U_]] } // same for [['string']] ...
 ```
+<br>
+
+### Custom schema key
+#### Use `__name__` to add a name to your type
+```ts
+type Human = {
+	name: string;
+}
+const Human_ = {
+	__name__: 'Human', // will be ignored
+	name: "string"
+}
+const AHuman = Aegis<Human>(Human_);
+
+const myHuman = {name:"jhon"}
+```
+
+- Will be accessible through `AHuman.name`
+- Will be displayed when a TypeGuard fails to provide clearer debug information
+	```
+	Failed to typeGuard value to 'Human' type
+	                                ^
+	```
