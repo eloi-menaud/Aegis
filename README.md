@@ -139,7 +139,6 @@ const U_ = { var: T_ }
 ```
 Could use other `UNschematized` types
 ```ts
-// A first type/schema
 type  T  = {
 	hash : Hash //type from lib or other
 }
